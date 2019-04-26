@@ -1,12 +1,24 @@
 # animated-bar-charts-docker
 
-Source 
+Source
 
 * https://towardsdatascience.com/create-animated-bar-charts-using-r-31d09e5841da
 * https://github.com/amrrs/animated_bar_charts_in_R
 
+```bash
+mkdir /tmp/my-code
+touch /tmp/my-code/script.r
+touch /tmp/my-code/data.csv
+```
+
+Create a file named `script.r` with the following content:
+
 ```R
-gdp_tidy <- read_csv("./data.csv")
+library(janitor)
+library(tidyverse)
+library(gganimate)
+
+gdp_tidy <- read_csv("/input/data.csv")
 
 gdp_formatted <- gdp_tidy %>%
   group_by(year) %>%
@@ -22,7 +34,7 @@ gdp_formatted <- gdp_tidy %>%
   geom_tile(aes(y = value/2,
                 height = value,
                 width = 0.9), alpha = 0.8, color = NA) +
-  geom_text(aes(y = 0, label = paste(country_name, " ")), vjust = 0.2, hjust = 1) +
+  geom_text(aes(size = 10, y = 0, label = paste(country_name, " ")), hjust = 0) +
   geom_text(aes(y=value,label = Value_lbl, hjust=0)) +
   coord_flip(clip = "off", expand = FALSE) +
   scale_y_continuous(labels = scales::comma) +
@@ -48,9 +60,25 @@ gdp_formatted <- gdp_tidy %>%
        plot.margin = margin(2,2, 2, 4, "cm"))
 anim = staticplot + transition_states(year, transition_length = 4, state_length = 1) +
   view_follow(fixed_x = TRUE)  +
-  labs(title = 'Ranking : {closest_state}',  
-       subtitle  =  "Top 5 Ativos",
+  labs(title = 'Ranking do Banco Central do Brasil : {closest_state}',  
+       subtitle  =  "Top 10 Bancos por Ativos",
        caption  = "By Luszczynski")
-animate(anim, 200, fps = 20,  width = 1200, height = 1000, 
-        renderer = gifski_renderer("my2.gif"))
+animate(anim, 200, fps = 5,  width = 1200, height = 1000, 
+        renderer = gifski_renderer("/output/chart.gif"))
+animate(anim, 200, fps = 5,  width = 1200, height = 1000, 
+        renderer = ffmpeg_renderer()) -> for_mp4
+anim_save("/output/chart.mp4", animation = for_mp4 )
 ```
+
+Now run:
+
+```bash
+docker run --rm -v /tmp/my-code:/input -v /tmp/output:/output teste
+```
+
+This container will generate two files:
+
+* chart.gif
+* chart.mp4
+
+You can find them inside `/tmp/output` folder.

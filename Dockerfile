@@ -2,12 +2,15 @@ FROM r-base
 
 RUN apt-get update && apt-get install libcurl4-openssl-dev libxml2-dev libssl-dev cargo ffmpeg -y && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN echo 'install.packages(c("ggplot2", "gganimate", "janitor", "scales", "curl", "xml2", "openssl", "httr", "rvest", "tidyverse", "gifski", "png"))' > dep.r
+RUN echo 'install.packages(c("ggplot2", "gganimate", "janitor", "scales", "curl", "xml2", "openssl", "httr", "rvest", "tidyverse", "gifski", "png"))' > dep.r && Rscript dep.r
 
-RUN echo dep.r
+VOLUME /input
+VOLUME /output
 
-RUN Rscript dep.r
+COPY run.sh /run.sh
 
-VOLUME /code
+RUN chmod +x /run.sh
 
-CMD [ "Rscript", "/code/script.r" ]
+WORKDIR /
+
+CMD [ "./run.sh" ]
